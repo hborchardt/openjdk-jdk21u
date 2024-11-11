@@ -1,29 +1,5 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
- */
-
 /* infback.c -- inflate using a call-back interface
- * Copyright (C) 1995-2022 Mark Adler
+ * Copyright (C) 1995-2011 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -38,6 +14,9 @@
 #include "inftrees.h"
 #include "inflate.h"
 #include "inffast.h"
+
+/* function prototypes */
+local void fixedtables(struct inflate_state FAR *state);
 
 /*
    strm provides memory allocation functions in zalloc and zfree, or
@@ -78,7 +57,7 @@ int ZEXPORT inflateBackInit_(z_streamp strm, int windowBits,
     Tracev((stderr, "inflate: allocated\n"));
     strm->state = (struct internal_state FAR *)state;
     state->dmax = 32768U;
-    state->wbits = (uInt)windowBits;
+    state->wbits = windowBits;
     state->wsize = 1U << windowBits;
     state->window = window;
     state->wnext = 0;
@@ -97,7 +76,7 @@ int ZEXPORT inflateBackInit_(z_streamp strm, int windowBits,
    used for threaded applications, since the rewriting of the tables and virgin
    may not be thread-safe.
  */
-local void fixedtables(struct inflate_state FAR *state) {
+static void fixedtables(struct inflate_state FAR *state) {
 #ifdef BUILDFIXED
     static int virgin = 1;
     static code *lenfix, *distfix;
@@ -465,11 +444,11 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
             }
 
             /* build code tables -- note: do not change the lenbits or distbits
-               values here (9 and 6) without reading the comments in inftrees.h
+               values here (10 and 9) without reading the comments in inftrees.h
                concerning the ENOUGH constants, which depend on those values */
             state->next = state->codes;
             state->lencode = (code const FAR *)(state->next);
-            state->lenbits = 9;
+            state->lenbits = 10;
             ret = inflate_table(LENS, state->lens, state->nlen, &(state->next),
                                 &(state->lenbits), state->work);
             if (ret) {
@@ -478,7 +457,7 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
                 break;
             }
             state->distcode = (code const FAR *)(state->next);
-            state->distbits = 6;
+            state->distbits = 9;
             ret = inflate_table(DISTS, state->lens + state->nlen, state->ndist,
                             &(state->next), &(state->distbits), state->work);
             if (ret) {
@@ -492,7 +471,8 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
 
         case LEN:
             /* use inflate_fast() if we have enough input and output */
-            if (have >= 6 && left >= 258) {
+            if (have >= INFLATE_FAST_MIN_INPUT &&
+                left >= INFLATE_FAST_MIN_OUTPUT) {
                 RESTORE();
                 if (state->whave < state->wsize)
                     state->whave = state->wsize - left;

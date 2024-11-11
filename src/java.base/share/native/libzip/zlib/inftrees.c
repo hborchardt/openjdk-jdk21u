@@ -1,29 +1,5 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
- */
-
 /* inftrees.c -- generate Huffman trees for efficient decoding
- * Copyright (C) 1995-2024 Mark Adler
+ * Copyright (C) 1995-2023 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -33,7 +9,7 @@
 #define MAXBITS 15
 
 const char inflate_copyright[] =
-   " inflate 1.3.1 Copyright 1995-2024 Mark Adler ";
+   " inflate 1.2.8 Copyright 1995-2013 Mark Adler ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
@@ -81,7 +57,7 @@ int ZLIB_INTERNAL inflate_table(codetype type, unsigned short FAR *lens,
         35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0};
     static const unsigned short lext[31] = { /* Length codes 257..285 extra */
         16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18,
-        19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 203, 77};
+        19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 72, 78};
     static const unsigned short dbase[32] = { /* Distance codes 0..29 base */
         1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
         257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
@@ -207,7 +183,7 @@ int ZLIB_INTERNAL inflate_table(codetype type, unsigned short FAR *lens,
         extra = lext;
         match = 257;
         break;
-    default:    /* DISTS */
+    case DISTS:
         base = dbase;
         extra = dext;
         match = 0;
@@ -233,7 +209,7 @@ int ZLIB_INTERNAL inflate_table(codetype type, unsigned short FAR *lens,
     for (;;) {
         /* create table entry */
         here.bits = (unsigned char)(len - drop);
-        if (work[sym] + 1U < match) {
+        if (work[sym] + 1 < match) {
             here.op = (unsigned char)0;
             here.val = work[sym];
         }
