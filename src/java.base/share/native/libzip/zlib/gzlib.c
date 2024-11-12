@@ -1,29 +1,5 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
- */
-
 /* gzlib.c -- zlib functions common to reading and writing gzip files
- * Copyright (C) 2004-2024 Mark Adler
+ * Copyright (C) 2004-2019 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -38,6 +14,10 @@
 #  define LSEEK lseek
 #endif
 #endif
+
+/* Local functions */
+local void gz_reset(gz_statep);
+local gzFile gz_open(const void *, int, const char *);
 
 #if defined UNDER_CE
 
@@ -90,7 +70,7 @@ char ZLIB_INTERNAL *gz_strwinerror(DWORD error) {
 #endif /* UNDER_CE */
 
 /* Reset gzip file state */
-local void gz_reset(gz_statep state) {
+static void gz_reset(gz_statep state) {
     state->x.have = 0;              /* no output data available */
     if (state->mode == GZ_READ) {   /* for reading ... */
         state->eof = 0;             /* not at end of file */
@@ -106,7 +86,8 @@ local void gz_reset(gz_statep state) {
 }
 
 /* Open a gzip file either by name or file descriptor. */
-local gzFile gz_open(const void *path, int fd, const char *mode) {
+static gzFile gz_open(const void *path, int fd, const char *mode)
+{
     gz_statep state;
     z_size_t len;
     int oflag;
@@ -202,7 +183,7 @@ local gzFile gz_open(const void *path, int fd, const char *mode) {
     }
 
     /* save the path name for error messages */
-#ifdef WIDECHAR
+#ifdef _WIN32
     if (fd == -2) {
         len = wcstombs(NULL, path, 0);
         if (len == (z_size_t)-1)
@@ -216,7 +197,7 @@ local gzFile gz_open(const void *path, int fd, const char *mode) {
         free(state);
         return NULL;
     }
-#ifdef WIDECHAR
+#ifdef _WIN32
     if (fd == -2)
         if (len)
             wcstombs(state->path, path, len + 1);
@@ -253,7 +234,7 @@ local gzFile gz_open(const void *path, int fd, const char *mode) {
 
     /* open the file with the appropriate flags (or just use fd) */
     state->fd = fd > -1 ? fd : (
-#ifdef WIDECHAR
+#ifdef _WIN32
         fd == -2 ? _wopen(path, oflag, 0666) :
 #endif
         open((const char *)path, oflag, 0666));
@@ -308,8 +289,9 @@ gzFile ZEXPORT gzdopen(int fd, const char *mode) {
 }
 
 /* -- see zlib.h -- */
-#ifdef WIDECHAR
-gzFile ZEXPORT gzopen_w(const wchar_t *path, const char *mode) {
+#ifdef _WIN32
+gzFile ZEXPORT gzopen_w(const wchar_t *path, const char *mode)
+{
     return gz_open(path, -2, mode);
 }
 #endif
@@ -585,22 +567,23 @@ void ZLIB_INTERNAL gz_error(gz_statep state, int err, const char *msg) {
     strcat(state->msg, ": ");
     strcat(state->msg, msg);
 #endif
+    return;
 }
 
+#ifndef INT_MAX
 /* portably return maximum value for an int (when limits.h presumed not
    available) -- we need to do this to cover cases where 2's complement not
    used, since C standard permits 1's complement and sign-bit representations,
    otherwise we could just use ((unsigned)-1) >> 1 */
 unsigned ZLIB_INTERNAL gz_intmax(void) {
-#ifdef INT_MAX
-    return INT_MAX;
-#else
-    unsigned p = 1, q;
+    unsigned p, q;
+
+    p = 1;
     do {
         q = p;
         p <<= 1;
         p++;
     } while (p > q);
     return q >> 1;
-#endif
 }
+#endif

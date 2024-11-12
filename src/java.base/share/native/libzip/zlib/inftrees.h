@@ -1,27 +1,3 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
- */
-
 /* inftrees.h -- header to use inftrees.c
  * Copyright (C) 1995-2005, 2010 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -60,17 +36,17 @@ typedef struct {
  */
 
 /* Maximum size of the dynamic table.  The maximum number of code structures is
-   1444, which is the sum of 852 for literal/length codes and 592 for distance
+   1924, which is the sum of 1332 for literal/length codes and 592 for distance
    codes.  These values were found by exhaustive searches using the program
    examples/enough.c found in the zlib distribution.  The arguments to that
    program are the number of symbols, the initial root table size, and the
-   maximum bit length of a code.  "enough 286 9 15" for literal/length codes
-   returns 852, and "enough 30 6 15" for distance codes returns 592. The
-   initial root table size (9 or 6) is found in the fifth argument of the
+   maximum bit length of a code.  "enough 286 10 15" for literal/length codes
+   returns returns 1332, and "enough 30 9 15" for distance codes returns 592.
+   The initial root table size (10 or 9) is found in the fifth argument of the
    inflate_table() calls in inflate.c and infback.c.  If the root table size is
    changed, then these maximum sizes would be need to be recalculated and
    updated. */
-#define ENOUGH_LENS 852
+#define ENOUGH_LENS 1332
 #define ENOUGH_DISTS 592
 #define ENOUGH (ENOUGH_LENS+ENOUGH_DISTS)
 

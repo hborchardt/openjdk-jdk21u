@@ -1,27 +1,3 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
- */
-
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-2017 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -35,17 +11,16 @@
 #endif
 
 z_const char * const z_errmsg[10] = {
-    (z_const char *)"need dictionary",     /* Z_NEED_DICT       2  */
-    (z_const char *)"stream end",          /* Z_STREAM_END      1  */
-    (z_const char *)"",                    /* Z_OK              0  */
-    (z_const char *)"file error",          /* Z_ERRNO         (-1) */
-    (z_const char *)"stream error",        /* Z_STREAM_ERROR  (-2) */
-    (z_const char *)"data error",          /* Z_DATA_ERROR    (-3) */
-    (z_const char *)"insufficient memory", /* Z_MEM_ERROR     (-4) */
-    (z_const char *)"buffer error",        /* Z_BUF_ERROR     (-5) */
-    (z_const char *)"incompatible version",/* Z_VERSION_ERROR (-6) */
-    (z_const char *)""
-};
+"need dictionary",     /* Z_NEED_DICT       2  */
+"stream end",          /* Z_STREAM_END      1  */
+"",                    /* Z_OK              0  */
+"file error",          /* Z_ERRNO         (-1) */
+"stream error",        /* Z_STREAM_ERROR  (-2) */
+"data error",          /* Z_DATA_ERROR    (-3) */
+"insufficient memory", /* Z_MEM_ERROR     (-4) */
+"buffer error",        /* Z_BUF_ERROR     (-5) */
+"incompatible version",/* Z_VERSION_ERROR (-6) */
+""};
 
 
 const char * ZEXPORT zlibVersion(void) {
@@ -83,11 +58,9 @@ uLong ZEXPORT zlibCompileFlags(void) {
 #ifdef ZLIB_DEBUG
     flags += 1 << 8;
 #endif
-    /*
 #if defined(ASMV) || defined(ASMINF)
     flags += 1 << 9;
 #endif
-     */
 #ifdef ZLIB_WINAPI
     flags += 1 << 10;
 #endif
@@ -182,6 +155,12 @@ int ZLIB_INTERNAL zmemcmp(const Bytef* s1, const Bytef* s2, uInt len) {
     return 0;
 }
 
+void ZLIB_INTERNAL zmemset(Bytef* dest, Byte val, uInt len) {
+    if (len == 0) return;
+    do {
+        *dest++ = val;  /* ??? to be unrolled */
+    } while (--len != 0);
+}
 void ZLIB_INTERNAL zmemzero(Bytef* dest, uInt len) {
     if (len == 0) return;
     do {
@@ -223,11 +202,10 @@ local ptr_table table[MAX_PTR];
  * a protected system like OS/2. Use Microsoft C instead.
  */
 
-voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, unsigned items, unsigned size) {
-    voidpf buf;
+voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, unsigned items, unsigned size)
+{
+    voidpf buf = opaque; /* just to make some compilers happy */
     ulg bsize = (ulg)items*size;
-
-    (void)opaque;
 
     /* If we allocate less than 65520 bytes, we assume that farmalloc
      * will return a usable pointer which doesn't have to be normalized.
@@ -250,9 +228,6 @@ voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, unsigned items, unsigned size) {
 
 void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr) {
     int n;
-
-    (void)opaque;
-
     if (*(ush*)&ptr != 0) { /* object < 64K */
         farfree(ptr);
         return;
@@ -268,6 +243,7 @@ void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr) {
         next_ptr--;
         return;
     }
+    ptr = opaque; /* just to make some compilers happy */
     Assert(0, "zcfree: ptr not found");
 }
 
@@ -285,12 +261,12 @@ void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr) {
 #endif
 
 voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, uInt items, uInt size) {
-    (void)opaque;
+    if (opaque) opaque = 0; /* to make compiler happy */
     return _halloc((long)items, size);
 }
 
 void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr) {
-    (void)opaque;
+    if (opaque) opaque = 0; /* to make compiler happy */
     _hfree(ptr);
 }
 
@@ -308,14 +284,14 @@ extern void free(voidpf ptr);
 #endif
 
 voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, unsigned items, unsigned size) {
-    (void)opaque;
+    if (opaque) items += size - size; /* make compiler happy */
     return sizeof(uInt) > 2 ? (voidpf)malloc(items * size) :
                               (voidpf)calloc(items, size);
 }
 
 void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr) {
-    (void)opaque;
     free(ptr);
+    if (opaque) return; /* make compiler happy */
 }
 
 #endif /* MY_ZCALLOC */
