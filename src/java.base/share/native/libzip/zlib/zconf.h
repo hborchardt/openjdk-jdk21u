@@ -367,8 +367,12 @@
 #if !defined(__MACTYPES__)
 typedef uint8_t    Byte;  /* 8 bits */
 #endif
-typedef uint32_t   uInt;  /* 32 bits */
-typedef uint64_t   uLong; /* 64 bits */
+// for compatibility with jint return type
+//typedef uint32_t   uInt;  /* 32 bits */
+//typedef uint64_t   uLong; /* 64 bits */
+
+typedef unsigned int uInt;
+typedef unsigned long uLong;
 
 #ifdef SMALL_MEDIUM
    /* Borland C/C++ and some old MSC versions ignore FAR inside typedef */
