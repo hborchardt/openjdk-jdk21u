@@ -155,6 +155,12 @@ int ZLIB_INTERNAL zmemcmp(const Bytef* s1, const Bytef* s2, uInt len) {
     return 0;
 }
 
+void ZLIB_INTERNAL zmemset(Bytef* dest, Byte val, uInt len) {
+    if (len == 0) return;
+    do {
+        *dest++ = val;  /* ??? to be unrolled */
+    } while (--len != 0);
+}
 void ZLIB_INTERNAL zmemzero(Bytef* dest, uInt len) {
     if (len == 0) return;
     do {
